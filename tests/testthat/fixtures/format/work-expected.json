@@ -1,0 +1,184 @@
+{
+  "rows": [
+    {
+      "character": "tessa",
+      "band": "full",
+      "maxima": {
+        "active_parts": 6,
+        "painted_items": 42,
+        "paint_passes": 57,
+        "path_numbers": 357,
+        "clip_applications": 2,
+        "gradient_uses": 0,
+        "glow_emitters": 0,
+        "blur_design_units": 0,
+        "inflated_glow_area_ratio": 0.0
+      }
+    },
+    {
+      "character": "tessa",
+      "band": "small",
+      "maxima": {
+        "active_parts": 6,
+        "painted_items": 42,
+        "paint_passes": 57,
+        "path_numbers": 357,
+        "clip_applications": 2,
+        "gradient_uses": 0,
+        "glow_emitters": 0,
+        "blur_design_units": 0,
+        "inflated_glow_area_ratio": 0.0
+      }
+    },
+    {
+      "character": "tessa",
+      "band": "micro",
+      "maxima": {
+        "active_parts": 5,
+        "painted_items": 29,
+        "paint_passes": 41,
+        "path_numbers": 272,
+        "clip_applications": 2,
+        "gradient_uses": 0,
+        "glow_emitters": 0,
+        "blur_design_units": 0,
+        "inflated_glow_area_ratio": 0.0
+      }
+    },
+    {
+      "character": "alpha_visor",
+      "band": "full",
+      "maxima": {
+        "active_parts": 17,
+        "painted_items": 37,
+        "paint_passes": 78,
+        "path_numbers": 329,
+        "clip_applications": 2,
+        "gradient_uses": 3,
+        "glow_emitters": 4,
+        "blur_design_units": 10,
+        "inflated_glow_area_ratio": 0.15118087846
+      }
+    },
+    {
+      "character": "alpha_visor",
+      "band": "small",
+      "maxima": {
+        "active_parts": 17,
+        "painted_items": 35,
+        "paint_passes": 76,
+        "path_numbers": 288,
+        "clip_applications": 1,
+        "gradient_uses": 2,
+        "glow_emitters": 4,
+        "blur_design_units": 10,
+        "inflated_glow_area_ratio": 0.15118087846
+      }
+    },
+    {
+      "character": "alpha_visor",
+      "band": "micro",
+      "maxima": {
+        "active_parts": 5,
+        "painted_items": 16,
+        "paint_passes": 24,
+        "path_numbers": 164,
+        "clip_applications": 1,
+        "gradient_uses": 2,
+        "glow_emitters": 0,
+        "blur_design_units": 0,
+        "inflated_glow_area_ratio": 0.0
+      }
+    },
+    {
+      "character": "study_bot",
+      "band": "full",
+      "maxima": {
+        "active_parts": 2,
+        "painted_items": 8,
+        "paint_passes": 16,
+        "path_numbers": 71,
+        "clip_applications": 1,
+        "gradient_uses": 0,
+        "glow_emitters": 3,
+        "blur_design_units": 3,
+        "inflated_glow_area_ratio": 0.06704074486
+      }
+    },
+    {
+      "character": "study_bot",
+      "band": "small",
+      "maxima": {
+        "active_parts": 2,
+        "painted_items": 8,
+        "paint_passes": 16,
+        "path_numbers": 71,
+        "clip_applications": 1,
+        "gradient_uses": 0,
+        "glow_emitters": 3,
+        "blur_design_units": 3,
+        "inflated_glow_area_ratio": 0.06704074486
+      }
+    },
+    {
+      "character": "study_bot",
+      "band": "micro",
+      "maxima": {
+        "active_parts": 1,
+        "painted_items": 7,
+        "paint_passes": 9,
+        "path_numbers": 66,
+        "clip_applications": 1,
+        "gradient_uses": 0,
+        "glow_emitters": 0,
+        "blur_design_units": 0,
+        "inflated_glow_area_ratio": 0.0
+      }
+    },
+    {
+      "character": "anchor_probe",
+      "band": "full",
+      "maxima": {
+        "active_parts": 2,
+        "painted_items": 2,
+        "paint_passes": 3,
+        "path_numbers": 9,
+        "clip_applications": 0,
+        "gradient_uses": 0,
+        "glow_emitters": 0,
+        "blur_design_units": 0,
+        "inflated_glow_area_ratio": 0.0
+      }
+    },
+    {
+      "character": "anchor_probe",
+      "band": "small",
+      "maxima": {
+        "active_parts": 2,
+        "painted_items": 2,
+        "paint_passes": 3,
+        "path_numbers": 9,
+        "clip_applications": 0,
+        "gradient_uses": 0,
+        "glow_emitters": 0,
+        "blur_design_units": 0,
+        "inflated_glow_area_ratio": 0.0
+      }
+    },
+    {
+      "character": "anchor_probe",
+      "band": "micro",
+      "maxima": {
+        "active_parts": 0,
+        "painted_items": 0,
+        "paint_passes": 0,
+        "path_numbers": 0,
+        "clip_applications": 0,
+        "gradient_uses": 0,
+        "glow_emitters": 0,
+        "blur_design_units": 0,
+        "inflated_glow_area_ratio": 0.0
+      }
+    }
+  ]
+}

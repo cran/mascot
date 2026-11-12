@@ -1,0 +1,281 @@
+# The engine in inst/www/ has no R file of its own: these tests run it in headless Chrome.
+
+skip_without_chrome <- function() {
+  testthat::skip_on_cran()
+  testthat::skip_if_not_installed("chromote")
+  testthat::skip_if_not_installed("withr")
+  testthat::skip_if(is.null(chromote::find_chrome()), "no Chrome or Chromium found")
+}
+
+# The message of a JavaScript exception that Chrome reports. An Error has a description; a thrown value that is not an
+# Error (`throw 'x'`) has none, so the text Chrome gives and the thrown value are used instead.
+page_exception_message <- function(details) {
+  description <- details$exception$description
+  if (is.character(description) && length(description) == 1L && nzchar(description)) {
+    return(description)
+  }
+  text <- details$text
+  value <- details$exception$value
+  parts <- c(
+    if (is.character(text) && length(text) == 1L && nzchar(text)) text,
+    if (is.atomic(value) && length(value) == 1L && !is.na(value)) as.character(value)
+  )
+  if (length(parts) == 0L) {
+    return("The page threw a value that is not an error, and Chrome gave no text for it.")
+  }
+  paste(parts, collapse = ": ")
+}
+
+# The page-head blocks of the built-in characters that `tags` use, once each: what htmltools writes into a saved page's
+# head. Test pages that write mascot() HTML by hand put them in their head, as a real page has them.
+page_character_blocks <- function(tags) {
+  checkmate::assert_list(tags)
+  dependencies <- htmltools::resolveDependencies(htmltools::findDependencies(tags))
+  characters <- Filter(function(dependency) startsWith(dependency$name, "mascot-character-"), dependencies)
+  vapply(characters, function(dependency) dependency$head, character(1))
+}
+
+# Chrome draws a new canvas on the GPU and moves it to the CPU after a few getImageData() reads; the two draw edges
+# slightly differently, so one frame could give two pictures (#503). Canvases the tests read use the CPU from the start.
+# Run before the engine scripts: its own getContext('2d') then gets this context back.
+cpu_canvases_html <- paste0(
+  "<script>document.querySelectorAll('canvas')",
+  ".forEach((c) => c.getContext('2d', { willReadFrequently: true }));</script>"
+)
+
+# Opens a blank page with the engine's drawing and motion files loaded (no host) and returns a function that evaluates
+# JavaScript there. A JavaScript exception stops the test with its message.
+local_engine_page <- function(env = parent.frame()) {
+  dir <- withr::local_tempdir(.local_envir = env)
+  www <- system.file("www", package = "mascot")
+  scripts <- file.path(
+    www,
+    c(
+      "mascot.js",
+      "mascot-motion.js",
+      "mascot-parts.js",
+      "mascot-geometry.js",
+      "mascot-faces.js"
+    )
+  )
+  page <- file.path(dir, "page.html")
+  writeLines(
+    c(
+      "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>engine</title></head><body>",
+      unlist(lapply(c("classic", "screen"), function(id) {
+        c(
+          sprintf('<script type="application/json" data-mascot-kit="%s">', id),
+          readLines(system.file("format", "kits", paste0(id, ".json"), package = "mascot")),
+          "</script>"
+        )
+      })),
+      sprintf("<script src=\"file://%s\"></script>", normalizePath(scripts, winslash = "/")),
+      "</body></html>"
+    ),
+    page
+  )
+  session <- local_chrome_session(env)
+  loaded <- session$Page$loadEventFired(wait_ = FALSE)
+  session$Page$navigate(paste0("file://", normalizePath(page, winslash = "/")), wait_ = FALSE)
+  session$wait_for(loaded)
+  function(js) {
+    result <- session$Runtime$evaluate(js, returnByValue = TRUE)
+    if (!is.null(result$exceptionDetails)) {
+      stop(page_exception_message(result$exceptionDetails), call. = FALSE)
+    }
+    result$result$value
+  }
+}
+
+# Host integration page: real packaged assets and real markup, with motion reduced before navigation.
+local_host_page <- function(
+  env = parent.frame(),
+  bubble = NULL,
+  reduced = TRUE,
+  scheme = "light",
+  size = 160,
+  placement = "inline",
+  viewport = NULL,
+  density = 1,
+  theme = NULL,
+  record_colours = FALSE,
+  motion = TRUE,
+  click = NULL,
+  shiny_menu = FALSE
+) {
+  skip_without_chrome()
+  dir <- withr::local_tempdir(.local_envir = env)
+  www <- system.file("www", package = "mascot")
+  all_scripts <- vapply(mascot_dependency()$script, function(script) script$src, character(1))
+  pre_host <- file.path(www, all_scripts[all_scripts != "mascot-host.js"])
+  host_script <- file.path(www, "mascot-host.js")
+  page <- file.path(dir, "host.html")
+  tessa_format_v1 <- paste(
+    readLines(system.file("format", "characters", "tessa.json", package = "mascot"), encoding = "UTF-8"),
+    collapse = "\n"
+  )
+  blob_v1 <- sub(
+    '"name": "Tessa"',
+    '"name": "Blob"',
+    sub('"id": "tessa"', '"id": "blob"', tessa_format_v1, fixed = TRUE),
+    fixed = TRUE
+  )
+  blob_v1 <- gsub('"rim"', '"body"', blob_v1, fixed = TRUE)
+  tag <- mascot(
+    id = "a",
+    bubble = bubble,
+    size = size,
+    placement = placement,
+    theme = theme,
+    motion = motion,
+    click = click
+  )
+  writeLines(
+    c(
+      '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>host</title>',
+      sprintf('<link rel="stylesheet" href="file://%s">', normalizePath(file.path(www, "mascot.css"))),
+      page_character_blocks(list(tag)),
+      '</head><body>',
+      as.character(tag),
+      cpu_canvases_html,
+      '<script type="application/json" data-mascot-character="blob">',
+      blob_v1,
+      '</script>',
+      sprintf('<script src="file://%s"></script>', normalizePath(pre_host)),
+      if (record_colours) {
+        paste0(
+          '<script>window.themeDraws=[];',
+          '{ const origGeo = mascot.geometry.draw;',
+          'mascot.geometry = { ...mascot.geometry, draw: function(ctx, compiled, state, colours, options) {',
+          'if (compiled?.source?.parts?.[0]?.id !== "ground_shadow" && colours?.body) {',
+          'const overrides = { ...(options?.overrides ?? {}) };',
+          'const coloursWithAliases = { ...colours, bodyHighlight: colours.body_highlight, blushStrong: colours.blush_strong, accessoryDetail: colours.accessory_detail, sparkleOutline: colours.sparkle_outline, eyeWhite: colours.eye_white };',
+          'themeDraws.push({character: compiled.source.id, colours: coloursWithAliases, overrides: overrides});',
+          '} return origGeo(ctx, compiled, state, colours, options); } }; }',
+          '</script>'
+        )
+      },
+      if (shiny_menu) {
+        '<script>window.menuEvents=[];window.Shiny={setInputValue:(...args)=>menuEvents.push(args)};</script>'
+      },
+      sprintf('<script src="file://%s"></script>', normalizePath(host_script)),
+      '</body></html>'
+    ),
+    page
+  )
+  session <- local_chrome_session(env)
+  session$Emulation$setEmulatedMedia(
+    features = list(
+      list(name = "prefers-reduced-motion", value = if (reduced) "reduce" else "no-preference"),
+      list(name = "prefers-color-scheme", value = scheme)
+    )
+  )
+  if (!is.null(viewport)) {
+    session$Emulation$setDeviceMetricsOverride(
+      width = viewport[[1]],
+      height = viewport[[2]],
+      deviceScaleFactor = density,
+      mobile = FALSE
+    )
+  }
+  loaded <- session$Page$loadEventFired(wait_ = FALSE)
+  session$Page$navigate(paste0("file://", normalizePath(page)), wait_ = FALSE)
+  session$wait_for(loaded)
+  evaluate <- function(js) {
+    result <- session$Runtime$evaluate(js, returnByValue = TRUE, awaitPromise = TRUE)
+    if (!is.null(result$exceptionDetails)) {
+      stop(page_exception_message(result$exceptionDetails), call. = FALSE)
+    }
+    result$result$value
+  }
+  attr(evaluate, "session") <- session
+  evaluate
+}
+
+# Start shinytest2 with its temporary browser files inside R's temporary directory.
+local_shiny_browser <- function(env = parent.frame()) {
+  testthat::skip_on_cran()
+  testthat::skip_if_not_installed("shinytest2")
+  testthat::skip_if_not_installed("chromote")
+  testthat::skip_if_not_installed("withr")
+  testthat::skip_if(is.null(chromote::find_chrome()), "no Chrome or Chromium found")
+  tmp <- withr::local_tempdir(.local_envir = env)
+  withr::local_envvar(c(TMPDIR = tmp), .local_envir = env)
+}
+
+# Read layout after both style resolution and ResizeObserver delivery.
+host_layout <- function(js, code) {
+  js(paste0(
+    "(async () => { await new Promise(resolve => requestAnimationFrame(() => ",
+    "requestAnimationFrame(resolve))); ",
+    code,
+    " })()"
+  ))
+}
+
+# Real host and canvas, with a deterministic frame queue around one remount.
+host_motion_js <- function(code) {
+  paste0(
+    "(() => {const el=document.getElementById('a');mascot.host.unmount(el);
+",
+    "const mount=mascot.mount,origGeo=mascot.geometry.draw,raf=window.requestAnimationFrame,cancel=window.cancelAnimationFrame;
+",
+    "const queued=new Map(),calls=[],players=[];let id=0;
+",
+    "window.requestAnimationFrame=fn=>{queued.set(++id,fn);return id;};window.cancelAnimationFrame=n=>queued.delete(n);
+",
+    "mascot.geometry = { ...mascot.geometry, draw: (ctx, compiled, state, colours, options) => {
+      const p = players[players.length - 1];
+      const chId = compiled.source.id;
+      if (compiled?.source?.parts?.[0]?.id !== 'ground_shadow') {
+        const poseObj = p?._lastPose || {};
+        const pose = {
+          ...poseObj,
+          look: poseObj['face.look_x'] !== undefined && poseObj['face.look_x'] !== null ? poseObj['face.look_x'] : (poseObj.look !== undefined ? poseObj.look : undefined),
+          lookY: poseObj['face.look_y'] !== undefined && poseObj['face.look_y'] !== null ? poseObj['face.look_y'] : (poseObj.lookY !== undefined ? poseObj.lookY : undefined)
+        };
+        calls.push({ character: chId, frame: options?.frame ?? 0, pose, colours: { ...colours } });
+      }
+      return origGeo(ctx, compiled, state, colours, options);
+    } };
+",
+    "mascot.mount=(...args)=>{
+      const p=mount(...args);
+      players.push(p);
+      p._lastPose = {};
+      const origUp = p.update;
+      if (origUp) {
+        p.update = (patch) => {
+          if (patch?.pose) {
+            p._lastPose = { ...patch.pose };
+            const pose = {
+              ...patch.pose,
+              look: patch.pose['face.look_x'] !== undefined && patch.pose['face.look_x'] !== null ? patch.pose['face.look_x'] : undefined,
+              lookY: patch.pose['face.look_y'] !== undefined && patch.pose['face.look_y'] !== null ? patch.pose['face.look_y'] : undefined
+            };
+            calls.push({ character: p.current().character, frame: 0, pose, colours: {} });
+          }
+          return origUp.call(p, patch);
+        };
+      }
+      return p;
+    };
+",
+    "const send=patch=>mascot.host.receive({id:'a',patch}),state=()=>mascot.host.state(el);
+",
+    "const fire=t=>{const batch=[...queued.values()];queued.clear();batch.forEach(fn=>fn(t));};
+",
+    "try{mascot.host.mount(el);const controller=players[0];",
+    code,
+    "}finally{mascot.host.unmount(el);mascot.mount=mount;mascot.geometry = { ...mascot.geometry, draw: origGeo };window.requestAnimationFrame=raf;window.cancelAnimationFrame=cancel;}})()"
+  )
+}
+
+
+# Source help during development; installed Rd database in coverage and R CMD check.
+local_help_page <- function(topic) {
+  checkmate::assert_string(topic)
+  name <- paste0(topic, ".Rd")
+  path <- testthat::test_path("..", "..", "man", name)
+  if (file.exists(path)) tools::parse_Rd(path) else tools::Rd_db("mascot")[[name]]
+}

@@ -1,0 +1,563 @@
+/* Private page fallbacks leave public hooks unset, so inherited user values can win. */
+:root,
+[data-bs-theme="light"] {
+  --_mascot-panel-bg: #fff;
+  --_mascot-panel-color: #212529;
+  --_mascot-panel-border: #dee2e6;
+}
+
+/* Dark only when the page says so (Bootstrap or Quarto), like the drawing; no signal means light. */
+[data-bs-theme="dark"],
+body.quarto-dark {
+  --_mascot-panel-bg: #212529;
+  --_mascot-panel-color: #f8f9fa;
+  --_mascot-panel-border: #495057;
+}
+
+.mascot {
+  --_mascot-size: var(--_mascot-size-default, 160px);
+  width: max(24px, var(--_mascot-size));
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Keep the connection message legible above the Shiny disconnect overlay (z-index 99998). */
+.mascot[data-disconnected] {
+  position: relative;
+  z-index: 99999;
+  opacity: 1;
+}
+
+.mascot[data-disconnected][data-floating="true"] {
+  z-index: 99999;
+}
+
+.mascot-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.mascot-status {
+  margin-top: 0.5rem;
+  font: inherit;
+  color: inherit;
+  text-align: center;
+}
+
+/* Reserve the same space when empty; long messages scroll rather than moving the page.
+   Let clicks through the reserved space; only the bubble itself takes pointer events. */
+.mascot-bubble-region {
+  pointer-events: none;
+  order: -1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 16em;
+  max-width: calc(100vw - 2rem);
+  height: calc(10em + 24px + 1rem);
+  transform: translateX(var(--_mascot-bubble-shift, 0px));
+  flex-shrink: 0;
+}
+
+/* Panels (#233): the bubble, the menu and the tooltip share one look, in the source page's palette (also when
+   floating), and one appear motion. Each kind sets only its own size, spacing and placement. */
+.mascot-panel {
+  box-sizing: border-box;
+  border: 1px solid
+    var(
+      --mascot-panel-border,
+      var(
+        --_mascot-source-panel-border,
+        var(--_mascot-source-border, var(--bs-border-color, var(--_mascot-panel-border, #dee2e6)))
+      )
+    );
+  background: var(
+    --mascot-panel-bg,
+    var(--_mascot-source-panel-bg, var(--_mascot-source-bg, var(--bs-body-bg, var(--_mascot-panel-bg, #fff))))
+  );
+  color: var(
+    --mascot-panel-color,
+    var(
+      --_mascot-source-panel-color,
+      var(--_mascot-source-text, var(--bs-body-color, var(--_mascot-panel-color, #212529)))
+    )
+  );
+  font: inherit;
+  animation: mascot-panel-appear 150ms ease-out;
+}
+
+.mascot-bubble {
+  pointer-events: auto;
+  position: relative;
+  max-width: 16em;
+  padding: 0.75em;
+  margin-bottom: 1rem;
+  border-radius: 0.75em;
+  overflow-wrap: anywhere;
+}
+
+.mascot-bubble[hidden] {
+  display: none;
+}
+
+.mascot-bubble-text {
+  max-height: 7em;
+  overflow-y: auto;
+}
+
+/* A panel's tail: a turned square whose two bordered edges point at the character. */
+.mascot-bubble::after,
+.mascot-panel[data-side]::after {
+  content: "";
+  position: absolute;
+  width: 0.7em;
+  height: 0.7em;
+  background: var(
+    --mascot-panel-bg,
+    var(--_mascot-source-panel-bg, var(--_mascot-source-bg, var(--bs-body-bg, var(--_mascot-panel-bg, #fff))))
+  );
+  border-right: 1px solid
+    var(
+      --mascot-panel-border,
+      var(
+        --_mascot-source-panel-border,
+        var(--_mascot-source-border, var(--bs-border-color, var(--_mascot-panel-border, #dee2e6)))
+      )
+    );
+  border-bottom: 1px solid
+    var(
+      --mascot-panel-border,
+      var(
+        --_mascot-source-panel-border,
+        var(--_mascot-source-border, var(--bs-border-color, var(--_mascot-panel-border, #dee2e6)))
+      )
+    );
+}
+
+.mascot-bubble::after {
+  bottom: -0.4em;
+  left: calc(50% - 0.35em);
+  transform: rotate(45deg);
+}
+
+/* Placed panels point at the character's centre (--_mascot-panel-tail, set when placed). */
+.mascot-panel[data-side="top"]::after,
+.mascot-panel[data-side="bottom"]::after {
+  left: calc(var(--_mascot-panel-tail, 50%) - 0.35em);
+}
+
+.mascot-panel[data-side="left"]::after,
+.mascot-panel[data-side="right"]::after {
+  top: calc(var(--_mascot-panel-tail, 50%) - 0.35em);
+}
+
+.mascot-panel[data-side="top"]::after {
+  bottom: -0.4em;
+  transform: rotate(45deg);
+}
+
+.mascot-panel[data-side="bottom"]::after {
+  top: -0.4em;
+  transform: rotate(225deg);
+}
+
+.mascot-panel[data-side="left"]::after {
+  right: -0.4em;
+  transform: rotate(-45deg);
+}
+
+.mascot-panel[data-side="right"]::after {
+  left: -0.4em;
+  transform: rotate(135deg);
+}
+
+/* The close button sits in the top-right corner; the text keeps clear of it. Tab order is unchanged (text, then button). */
+.mascot-bubble:has(.mascot-bubble-close) {
+  padding-right: calc(0.75em + 24px + 0.25em);
+}
+
+.mascot-bubble-close {
+  position: absolute;
+  top: 0.4em;
+  right: 0.4em;
+  display: block;
+  box-sizing: border-box;
+  min-width: 24px;
+  min-height: 24px;
+  margin: 0;
+  padding: 0.1em 0.4em;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid
+    var(
+      --mascot-panel-border,
+      var(
+        --_mascot-source-panel-border,
+        var(--_mascot-source-border, var(--bs-border-color, var(--_mascot-panel-border, #dee2e6)))
+      )
+    );
+  border-radius: 0.25em;
+  cursor: pointer;
+}
+
+@keyframes mascot-panel-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* App-level motion controls also apply to the panels and restore button. */
+.mascot[data-reduced="true"] .mascot-panel {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-panel {
+    animation: none;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .mascot {
+    --_mascot-size: var(--_mascot-size-small, var(--_mascot-size-default, 160px));
+  }
+
+  /* On a phone, a floating mascot whose small-screen size is "auto" is at most 96 px. */
+  .mascot[data-floating="true"][data-small-screen="auto"] {
+    --_mascot-size: min(var(--_mascot-size-default, 160px), 96px);
+  }
+}
+
+.mascot [hidden] {
+  display: none;
+}
+
+.mascot[data-floating="true"] {
+  position: fixed;
+  font: var(--_mascot-source-font, inherit);
+  color: var(--_mascot-source-color, inherit);
+  z-index: var(
+    --mascot-z-index,
+    var(--_mascot-source-z-index, 1031)
+  ); /* Above Bootstrap fixed navbars (1030), below offcanvas and modal overlays. */
+}
+
+.mascot[data-floating="true"][data-position$="right"] {
+  right: 1rem;
+}
+
+.mascot[data-floating="true"][data-position$="left"] {
+  left: 1rem;
+}
+
+.mascot[data-floating="true"][data-position^="top"] {
+  top: 1rem;
+}
+
+.mascot[data-floating="true"][data-position^="bottom"] {
+  bottom: 1rem;
+}
+
+.mascot[data-floating="true"][data-position="bottom-right"] {
+  bottom: calc(1rem + var(--_mascot-notification-offset, 0px));
+}
+
+/* A mascot being dragged, or dropped freely, sits at its own point; its corner still orients the bubble and menu. */
+.mascot[data-floating="true"][data-placed="true"] {
+  top: var(--_mascot-drag-top, 1rem);
+  right: auto;
+  bottom: auto;
+  left: var(--_mascot-drag-left, 1rem);
+}
+
+/* Floating messages do not change the canvas or corner coordinates. */
+.mascot[data-floating="true"] .mascot-bubble-region {
+  position: absolute;
+  bottom: 100%;
+  height: auto;
+  transform: none;
+}
+
+.mascot[data-floating="true"][data-position$="right"] .mascot-bubble-region {
+  right: 0;
+}
+
+.mascot[data-floating="true"][data-position$="left"] .mascot-bubble-region {
+  left: 0;
+}
+
+.mascot[data-floating="true"][data-position^="top"] .mascot-bubble-region {
+  top: 100%;
+  bottom: auto;
+}
+
+.mascot[data-floating="true"][data-position^="top"] .mascot-bubble {
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+
+.mascot[data-floating="true"][data-position^="top"] .mascot-bubble::after {
+  top: -0.4em;
+  bottom: auto;
+  transform: rotate(225deg);
+}
+
+.mascot[data-floating="true"][data-position$="right"] .mascot-bubble::after {
+  left: auto;
+  right: min(1.5rem, 50%);
+}
+
+.mascot[data-floating="true"][data-position$="left"] .mascot-bubble::after {
+  left: min(1.5rem, 50%);
+}
+
+.mascot-minimise,
+.mascot-restore {
+  box-sizing: border-box;
+  min-width: 24px;
+  min-height: 24px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mascot-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: 0.25rem;
+  z-index: 1;
+}
+
+.mascot-actions[hidden] {
+  display: none;
+}
+
+/* Opacity preserves the keyboard route; touch users have no hover step. */
+@media (hover: hover) and (pointer: fine) {
+  .mascot-actions {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .mascot:hover > .mascot-actions,
+  .mascot:focus-within > .mascot-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.mascot-minimise {
+  border: 1px solid currentColor;
+  color: var(
+    --mascot-panel-color,
+    var(--_mascot-source-panel-color, var(--_mascot-source-text, var(--bs-body-color, var(--_mascot-panel-color))))
+  );
+  background: transparent;
+  box-shadow: 0 0 0.35rem color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: 0.25rem;
+  line-height: 1;
+}
+
+.mascot-restore {
+  border: 2px solid var(--mascot-restore-fg, var(--_mascot-source-restore-fg, var(--_mascot-restore-fg, currentColor)));
+  color: var(--mascot-restore-fg, var(--_mascot-source-restore-fg, var(--_mascot-restore-fg, currentColor)));
+  background: var(
+    --mascot-restore-bg,
+    var(--_mascot-source-restore-bg, var(--_mascot-restore-bg, var(--bs-body-bg, #fff)))
+  );
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  transition:
+    transform 150ms ease-out,
+    box-shadow 150ms ease-out;
+}
+
+.mascot-restore:hover,
+.mascot-restore:focus-visible {
+  transform: scale(1.08);
+  box-shadow: 0 0 0.75rem
+    var(--mascot-restore-glow, var(--_mascot-source-restore-glow, var(--_mascot-restore-glow, currentColor)));
+}
+
+.mascot-minimise:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.mascot-restore:focus-visible {
+  outline: 2px solid var(--mascot-restore-fg, var(--_mascot-source-restore-fg, var(--_mascot-restore-fg, currentColor)));
+  outline-offset: 3px;
+}
+
+.mascot[data-minimised="true"] {
+  width: 48px;
+}
+
+/* Preserve live status announcements without expanding the compact restore button. */
+.mascot[data-minimised="true"] .mascot-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-restore {
+    transition: none;
+  }
+
+  .mascot-restore:hover,
+  .mascot-restore:focus-visible {
+    transform: none;
+  }
+}
+
+.mascot-source {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.mascot[data-floating="true"][data-source-hidden="true"] {
+  display: none;
+}
+
+.mascot[data-reduced="true"] .mascot-restore,
+.mascot[data-restoring="false"] .mascot-restore {
+  transition: none;
+}
+
+.mascot[data-reduced="true"] .mascot-restore:hover,
+.mascot[data-reduced="true"] .mascot-restore:focus-visible,
+.mascot[data-restoring="false"] .mascot-restore:hover,
+.mascot[data-restoring="false"] .mascot-restore:focus-visible {
+  transform: none;
+}
+
+/* Touch drags must not scroll the page or select text, including on the restore button. */
+.mascot[data-floating="true"][data-drag="snap"] .mascot-canvas,
+.mascot[data-floating="true"][data-drag="free"] .mascot-canvas,
+.mascot[data-floating="true"][data-drag="snap"] .mascot-restore,
+.mascot[data-floating="true"][data-drag="free"] .mascot-restore {
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.mascot[data-floating="true"][data-dragging="true"] .mascot-canvas,
+.mascot[data-floating="true"][data-dragging="true"] .mascot-restore {
+  cursor: grabbing;
+}
+
+/* With a click, a native button wraps the canvas: an action or a menu toggle. */
+.mascot-button {
+  display: block;
+  flex-shrink: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.mascot-button[aria-disabled="true"] {
+  cursor: default;
+}
+
+.mascot-button:focus-visible,
+.mascot-menu [role="menuitem"]:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.mascot-menu {
+  position: absolute;
+  top: var(--_mascot-menu-top, 0px);
+  left: var(--_mascot-menu-left, 0px);
+  right: auto;
+  z-index: 2;
+  width: max-content;
+  min-width: min(10em, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  max-height: min(18em, var(--_mascot-menu-max-height, calc(100vh - 2rem)));
+  overflow-y: auto;
+  padding: 0.35em;
+  border-radius: 0.5em;
+}
+
+/* The menu scrolls, which would clip a tail; the side it opens on shows in the mascot's gaze instead. */
+.mascot-menu[data-side]::after {
+  content: none;
+}
+
+/* The tooltip can be hovered, so the pointer can move onto it without it closing (WCAG 1.4.13). */
+.mascot-tooltip {
+  position: absolute;
+  top: var(--_mascot-tooltip-top, 0px);
+  left: var(--_mascot-tooltip-left, 0px);
+  z-index: 2;
+  width: max-content;
+  max-width: min(16em, calc(100vw - 2rem), var(--_mascot-tooltip-max-width, calc(100vw - 2rem)));
+  max-height: var(--_mascot-tooltip-max-height, calc(100vh - 2rem));
+  overflow-y: auto;
+  padding: 0.3em 0.6em;
+  border-radius: 0.5em;
+  overflow-wrap: anywhere;
+}
+
+.mascot-menu [role="menuitem"] {
+  display: block;
+  width: 100%;
+  min-height: 24px;
+  padding: 0.4em 0.65em;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.mascot-menu [role="menuitem"]:hover,
+.mascot-menu [role="menuitem"]:focus {
+  text-decoration: underline;
+}
+
+/* Per-panel settings are applied before showing, including on static pages. */
+.mascot-panel[data-motion="false"] {
+  animation: none;
+}
+
+.mascot .mascot-motion-copy,
+.mascot[data-floating] .mascot-motion-copy {
+  position: fixed;
+  inset: auto;
+  pointer-events: none;
+  margin: 0;
+  z-index: 1;
+  animation: none;
+}
+
+/* Copies are pixels or inert panels, never extra controls or status announcements. */
+.mascot-motion-copy::after {
+  display: none;
+}

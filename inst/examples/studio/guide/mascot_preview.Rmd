@@ -1,0 +1,24 @@
+```{r setup-mascot_preview, include = FALSE, echo = FALSE}
+studio_character <- if (exists("studio_character")) studio_character else formals(mascot::mascot)$character
+```
+
+```{r mascot_preview-try-live, echo = FALSE}
+if (!in_studio()) guide_try_live("mascot_preview")
+```
+
+```{r mascot_preview-experimental, echo = FALSE}
+htmltools::div(
+  class = "pg-note",
+  htmltools::tags$span(class = "badge text-bg-warning", "Experimental"),
+  " Its purpose, arguments and page layout may change in a later release."
+)
+```
+
+### Offline comparison
+
+mascot_preview() draws your character offline across light and dark modes, comparing your chosen size
+with 160, 96 and 24 px columns. Previews are always inline and accept no placement or click arguments.
+
+```{r mascot_preview-mistakes, echo = FALSE}
+if (!in_studio()) guide_mistakes_html("mascot_preview", studio_character)
+```

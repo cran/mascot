@@ -1,0 +1,42 @@
+```{r setup-mascot_bubble, include = FALSE, echo = FALSE}
+studio_character <- if (exists("studio_character")) studio_character else formals(mascot::mascot)$character
+```
+
+```{r mascot_bubble-try-live, echo = FALSE}
+if (!in_studio()) guide_try_live("mascot_bubble")
+```
+
+### How long a bubble stays
+
+```{r mascot_bubble-timeline, echo = FALSE}
+guide_timeline("shown", "duration = 5: hides", "Inf: stays")
+```
+
+<div class="pg-callout pg-callout-warn">
+
+<strong>HTML is trusted as it is.</strong>
+Plain text is escaped and always safe. Wrap only your own content in HTML(), never untrusted visitor
+input. Bootstrap classes such as badge, table, and progress work inside the bubble because bslib includes
+Bootstrap.
+
+</div>
+
+<div class="pg-callout">
+
+<strong>Supply text when setting options.</strong>
+Setting `duration` or `closable` requires `text`.
+To remove the bubble, pass `bubble = mascot_bubble()` to `update_mascot()`.
+
+</div>
+
+<div class="pg-callout">
+
+<strong>Hide the space kept for the bubble.</strong>
+An inline mascot keeps room above it for a bubble, even when none shows. On a page that never shows a bubble,
+add `.mascot-bubble-region { display: none; }` to your CSS. See `?mascot_styling` for the classes you can style.
+
+</div>
+
+```{r mascot_bubble-mistakes, echo = FALSE}
+if (!in_studio()) guide_mistakes_html("mascot_bubble", studio_character)
+```

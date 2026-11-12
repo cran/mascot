@@ -1,0 +1,37 @@
+Package: mascot
+Title: Live Mood-Driven Mascots for 'Shiny' Apps and 'Quarto' Sites
+Version: 0.1.0
+Authors@R: 
+    person("Harsh", "Verma", email = "analyticswithharsh@gmail.com", role = c("aut", "cre", "cph"))
+Description: Adds a character drawn in code to 'Shiny' apps and 'Quarto'
+    sites. The character shows a mood with status text beside it and
+    animates when the mood changes; a 'Shiny' server can change its mood,
+    status, speech bubble and gestures, and a click can run an action or
+    open a menu. It follows light and dark mode and takes its colours from
+    built-in palettes or custom colours. Custom characters can be described
+    in 'JSON' and checked before use, and an interactive app demonstrates
+    every function.
+License: MIT + file LICENSE
+URL: https://insightsurge.github.io/mascot/,
+        https://github.com/insightsurge/mascot
+BugReports: https://github.com/insightsurge/mascot/issues
+Depends: R (>= 4.1.0)
+Imports: checkmate, cli, htmltools (>= 0.5.3), jsonlite, shiny (>=
+        1.8.1)
+Suggests: bslib (>= 0.7.0), chromote, covr, golem, knitr, later,
+        lifecycle, promises, rmarkdown, shinytest2 (>= 0.5.0), testthat
+        (>= 3.2.1), withr
+VignetteBuilder: knitr
+Config/cran-gate/coverage: 70
+Config/cran-gate/extra-dirs: tools
+Config/testthat/edition: 3
+Config/testthat/parallel: true
+Encoding: UTF-8
+Language: en-GB
+Config/roxygen2/version: 8.1.0
+NeedsCompilation: no
+Packaged: 2026-10-27 09:31:40 UTC; harshverma
+Author: Harsh Verma [aut, cre, cph]
+Maintainer: Harsh Verma <analyticswithharsh@gmail.com>
+Repository: CRAN
+Date/Publication: 2026-11-12 11:10:02 UTC
